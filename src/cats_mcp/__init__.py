@@ -1,0 +1,1 @@
+"""CATS MCP server package."""

@@ -2,7 +2,7 @@ import pytest
 from mcp import Client
 from mcp.types import TextContent
 
-from server import mcp
+from cats_mcp.server import mcp
 
 
 @pytest.fixture

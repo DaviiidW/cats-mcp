@@ -7,11 +7,14 @@ dependencies = [
 ]
 
 [project.scripts]
-cats-mcp = "server:main"
+cats-mcp = "cats_mcp.server:main"
 
 [tool.hatch.build.targets.wheel]
-only-include = ["src"]
-sources = ["src"]
+packages = ["src/cats_mcp"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
@@ -19,5 +22,6 @@ dev = [
     "inline-snapshot>=0.35.4",
     "mypy>=2.3.1",
     "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
     "ruff>=0.16.6",
 ]
