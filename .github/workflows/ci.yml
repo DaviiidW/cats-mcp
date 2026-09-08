@@ -6,16 +6,19 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  PYTHONPATH: src
+
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v3
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3.2.4
       - run: uv python install 3.12
-      - run: uv sync --all-extras
-      - run: uv run ruff check .
-      - run: uv run mypy src/
+      - run: uv sync --all-extras --locked --no-build --no-install-project
+      - run: uv run --locked --no-build --no-sync ruff check .
+      - run: uv run --locked --no-build --no-sync mypy src/
 
   test:
     needs: lint
@@ -26,11 +29,11 @@ jobs:
         python-version: ["3.11", "3.12"]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v3
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3.2.4
       - run: uv python install ${{ matrix.python-version }}
-      - run: uv sync --all-extras
-      - run: uv run pytest --cov=cats_mcp --cov-report=xml -v
+      - run: uv sync --all-extras --locked --no-build --no-install-project
+      - run: uv run --locked --no-build --no-sync pytest --cov=cats_mcp --cov-report=xml -v
       - uses: actions/upload-artifact@v4
         with:
           name: coverage-${{ matrix.os }}-${{ matrix.python-version }}
