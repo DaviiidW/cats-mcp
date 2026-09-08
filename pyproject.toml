@@ -1,0 +1,23 @@
+[project]
+name = "cats-mcp"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp[cli]>=2.0,<3",
+]
+
+[project.scripts]
+cats-mcp = "server:main"
+
+[tool.hatch.build.targets.wheel]
+only-include = ["src"]
+sources = ["src"]
+
+[dependency-groups]
+dev = [
+    "anyio>=4.15.1",
+    "inline-snapshot>=0.35.4",
+    "mypy>=2.3.1",
+    "pytest>=9.1.1",
+    "ruff>=0.16.6",
+]
