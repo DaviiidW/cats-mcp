@@ -12,24 +12,34 @@ type: Task
 <!-- Qué hay que implementar, en una o dos frases -->
 
 ## Contexto / motivación
-<!-- Por qué es necesaria esta tarea, a qué parte del sistema afecta -->
+<!-- Por qué es necesaria, a qué parte del sistema afecta -->
 
 ## Criterios de aceptación
 - [ ] 
 - [ ] 
 - [ ] 
 
-## Componente afectado
-<!-- Marca el que aplique -->
-- [ ] Resolver (bootstrap de CATS)
-- [ ] Servidor MCP
-- [ ] Testing
-- [ ] Empaquetado y distribución (uvx/PyPI)
-- [ ] Documentación
-- [ ] Otro:
+## Capa / área afectada
+- [ ] Adaptador MCP (tools, resources, esquemas)
+- [ ] Política y consentimiento (allowlist, confirmación, redacción)
+- [ ] Orquestación de ejecuciones (handles, estado, cancelación)
+- [ ] Adaptador de CATS (resolver, comando, subproceso)
+- [ ] Mediación (normalización, agrupación, severidad, presupuesto)
+- [ ] Almacén (runs, artefactos, índice)
+- [ ] Testing (pytest)
+- [ ] Validación experimental (métricas, experimentos)
+- [ ] Empaquetado y distribución (uvx/PyPI, Docker)
+- [ ] Infraestructura de proyecto (repo, CI, entorno)
+- [ ] Memoria y documentación
+
+## Objetivo específico
+<!-- OE1..OE7, o "ninguno (soporte)" -->
+
+## Dependencias
+<!-- Bloqueada por la issue o épica: #N -->
 
 ## Notas técnicas
-<!-- Detalles de implementación, decisiones de diseño, enlaces relevantes -->
+<!-- Decisiones de diseño, enlaces, restricciones -->
 
 ## Estimación
-<!-- ej: XS / S / M / L, o en horas/días -->
+<!-- 1h / 2h / 3h / 5h / 8h / 13h / 21h / 40h -->
