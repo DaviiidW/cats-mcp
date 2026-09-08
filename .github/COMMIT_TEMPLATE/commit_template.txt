@@ -3,7 +3,8 @@
 #
 # VALID TYPES:
 # feat (feature), fix (bug fix), docs (documentation), style (formatting),
-# refactor (code change, no functional change), test (tests), chore (maintenance)
+# refactor (code change, no functional change), test (tests), chore (maintenance),
+# ci(continuous integration)
 #
 # EXAMPLE: feat(login): add forgotten password link
 
