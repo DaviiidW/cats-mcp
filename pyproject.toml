@@ -1,19 +1,29 @@
 [project]
 name = "cats-mcp"
 version = "0.1.0"
-description = "Add your description here"
+description = "MCP server that lets an AI agent run the CATS REST API fuzzer"
 readme = "README.md"
 authors = [
     { name = "DaviiidW", email = "davbasbra@alum.us.es" }
 ]
-requires-python = ">=3.13"
+requires-python = ">=3.10"
 dependencies = [
     "mcp[cli]>=2.3.0",
 ]
 
 [project.scripts]
-cats-mcp = "cats_mcp:main"
+cats-mcp = "cats_mcp.__main__:main"
 
 [build-system]
 requires = ["uv_build>=0.13.6,<0.14.0"]
 build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+anyio_mode = "auto"
+
+[dependency-groups]
+dev = [
+    "anyio>=4.16.0",
+    "pytest>=9.2.0",
+]
