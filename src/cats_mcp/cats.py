@@ -1,7 +1,12 @@
 """CATS adapter: commands, subprocess, output and exit codes."""
 
 from dataclasses import dataclass
+import os
+from pathlib import Path
+import shutil
 
+
+BINARY_NAME = "cats.exe" if os.name == "nt" else "cats"
 
 EXIT_CODE_MEANINGS = {
     0: "Success: CATS finished and reported no errors.",
@@ -17,6 +22,13 @@ EXIT_CODE_MEANINGS = {
     ),
 }
 
+class CatsError(Exception):
+    """A problem the agent can fix; the message says how."""
+
+class CatsNotFoundError(CatsError):
+    """The CATS binary could not be located."""
+
+
 @dataclass(frozen=True)
 class CatsResult:
     exit_code: int
@@ -25,3 +37,28 @@ class CatsResult:
     stderr: str
     command: list[str]
 
+
+def find_cats() -> Path:
+    configured = os.environ.get("CATS_PATH")
+    if configured:
+        path = _absolute_path(configured)
+        if not path.is_file():
+            raise CatsNotFoundError(
+                f"CATS_PATH points to '{path}', which is not an existing "
+                "file. Set CATS_PATH to the full path of the CATS binary, "
+                f"or unset it to look for '{BINARY_NAME}' on the PATH."
+            )
+        return path
+
+    found = shutil.which(BINARY_NAME)
+    if found is None:
+        raise CatsNotFoundError(
+            f"CATS was not found: '{BINARY_NAME}' is not on the PATH. Install CATS "
+            "(https://endava.github.io/cats/) and add it to the PATH, or set "
+            "CATS_PATH to the full path of the binary."
+        )
+    return _absolute_path(found)
+
+
+def _absolute_path(path: str | Path) -> Path:
+    return Path(path).expanduser().resolve()
