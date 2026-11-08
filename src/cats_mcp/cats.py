@@ -1,6 +1,6 @@
 """CATS adapter: commands, subprocess, output and exit codes."""
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from contextlib import suppress
 from dataclasses import dataclass
 import os
@@ -28,6 +28,9 @@ EXIT_CODE_MEANINGS = {
         "offending option, correct it and try again."
     ),
 }
+
+PROFILES = ("quick", "security", "compliance", "ci", "full")
+
 
 class CatsError(Exception):
     """A problem the agent can fix; the message says how."""
@@ -73,7 +76,6 @@ def describe_exit_code(exit_code: int) -> str:
         "finished. Check the output.",
     )
 
-
 async def run_cats(args: Sequence[str]) -> CatsResult:
     command = [str(find_cats()), *args]
     try:
@@ -106,6 +108,74 @@ async def run_cats(args: Sequence[str]) -> CatsResult:
         stderr="".join(stderr),
         command=command,
     )
+
+def validate_args(contract: str) -> list[str]:
+    return ["validate", _contract_option(contract), "--detailed", "--json"]
+
+def list_paths_args(contract: str) -> list[str]:
+    return ["list", "--paths", _contract_option(contract), "--json"]
+
+def path_details_args(contract: str, path: str) -> list[str]:
+    return ["list", "--paths", f"--path={path}", _contract_option(contract), "--json"]
+
+def estimate_args(
+    contract: str,
+    url: str,
+    profile: str,
+    endpoints: Sequence[str] | None = None,
+    methods: Sequence[str] | None = None,
+) -> list[str]:
+    return [*_fuzzing_args(contract, url, profile, endpoints, methods), "--dryRun"]
+
+def run_args(
+    contract: str,
+    url: str,
+    profile: str,
+    endpoints: Sequence[str] | None = None,
+    methods: Sequence[str] | None = None,
+    headers: Mapping[str, str] | None = None,
+    ref_data: str | Path | None = None,
+    output_dir: str | Path | None = None,
+) -> list[str]:
+    args = _fuzzing_args(contract, url, profile, endpoints, methods)
+    headers = headers or {}
+    for name, value in headers.items():
+        args += ["-H", f"{name}={value}"]
+    masked = dict.fromkeys(["Authorization", *headers])
+    args.append(f"--maskHeaders={','.join(masked)}")
+    if ref_data is not None:
+        args.append(f"--refData={_absolute_path(ref_data)}")
+    if output_dir is not None:
+        args += ["-o", str(_absolute_path(output_dir))]
+    return args
+
+def _fuzzing_args(
+    contract: str,
+    url: str,
+    profile: str,
+    endpoints: Sequence[str] | None,
+    methods: Sequence[str] | None,
+) -> list[str]:
+    if profile not in PROFILES:
+        raise CatsError(
+            f"Invalid profile: '{profile}'. Allowed values: {', '.join(PROFILES)}. "
+        )
+    args = [
+        _contract_option(contract),
+        f"--server={url}",
+        f"--profile={profile}",
+        "--no-color",
+        "--no-checkUpdate",
+    ]
+    if endpoints:
+        args.append(f"--paths={','.join(endpoints)}")
+    if methods:
+        args.append(f"--httpMethods={','.join(methods)}")
+    return args
+
+def _contract_option(contract: str) -> str:
+    location = contract if "://" in contract else _absolute_path(contract)
+    return f"--contract={location}"
 
 def _absolute_path(path: str | Path) -> Path:
     return Path(path).expanduser().resolve()
