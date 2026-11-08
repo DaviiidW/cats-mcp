@@ -1,9 +1,16 @@
 """CATS adapter: commands, subprocess, output and exit codes."""
 
+from collections.abc import Sequence
+from contextlib import suppress
 from dataclasses import dataclass
 import os
 from pathlib import Path
 import shutil
+from subprocess import DEVNULL, PIPE
+
+import anyio
+from anyio.abc import ByteReceiveStream, Process
+from anyio.streams.text import TextReceiveStream
 
 
 BINARY_NAME = "cats.exe" if os.name == "nt" else "cats"
@@ -59,6 +66,60 @@ def find_cats() -> Path:
         )
     return _absolute_path(found)
 
+def describe_exit_code(exit_code: int) -> str:
+    return EXIT_CODE_MEANINGS.get(
+        exit_code,
+        f"Unexpected exit code {exit_code}: CATS crashed or was stopped before it "
+        "finished. Check the output.",
+    )
+
+
+async def run_cats(args: Sequence[str]) -> CatsResult:
+    command = [str(find_cats()), *args]
+    try:
+        process = await anyio.open_process(
+            command, stdin=DEVNULL, stdout=PIPE, stderr=PIPE
+        )
+    except OSError as error:
+        raise CatsError(
+            f"Could not start CATS at '{command[0]}': {error}. Check that it is the "
+            "native CATS binary and that it is executable, or set "
+            "CATS_PATH to a valid one."
+        ) from error
+
+    stdout: list[str] = []
+    stderr: list[str] = []
+    async with process:
+        try:
+            async with anyio.create_task_group() as readers:
+                readers.start_soon(_read_stream, process.stdout, stdout)
+                readers.start_soon(_read_stream, process.stderr, stderr)
+            exit_code = await process.wait()
+        except BaseException:
+            await _stop_process(process)
+            raise
+
+    return CatsResult(
+        exit_code=exit_code,
+        meaning=describe_exit_code(exit_code),
+        stdout="".join(stdout),
+        stderr="".join(stderr),
+        command=command,
+    )
 
 def _absolute_path(path: str | Path) -> Path:
     return Path(path).expanduser().resolve()
+
+async def _read_stream(stream: ByteReceiveStream, chunks: list[str]) -> None:
+    async for chunk in TextReceiveStream(stream, errors="replace"):
+        chunks.append(chunk)
+
+async def _stop_process(process: Process) -> None:
+    with anyio.CancelScope(shield=True):
+        with suppress(ProcessLookupError):
+            process.terminate()
+        with anyio.move_on_after(5):
+            await process.wait()
+        with suppress(ProcessLookupError):
+            process.kill()
+        await process.wait()
