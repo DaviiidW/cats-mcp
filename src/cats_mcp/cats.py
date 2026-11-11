@@ -125,7 +125,11 @@ def estimate_args(
     endpoints: Sequence[str] | None = None,
     methods: Sequence[str] | None = None,
 ) -> list[str]:
-    return [*_fuzzing_args(contract, url, profile, endpoints, methods), "--dryRun"]
+    return [
+        *_fuzzing_args(contract, url, profile, endpoints, methods),
+        "--dryRun",
+        "--verbosity=detailed",
+    ]
 
 def run_args(
     contract: str,
